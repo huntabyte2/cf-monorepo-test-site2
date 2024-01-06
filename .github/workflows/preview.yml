@@ -1,0 +1,114 @@
+name: Deploy Preview Site
+on:
+  pull_request_target:
+    types:
+      - opened
+      - labeled
+      - synchronize
+    paths:
+      - "sites/www/**"
+
+# cancel in-progress runs on new commits to same PR (github.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  # default contents: read & write (in forked repos, only read)
+  contents: write
+  # default deployments: read & write (in forked repos, only read)
+  deployments: write
+  # default pull-requests: read & write (in forked repos, only read)
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish Preview to Cloudflare Pages
+    if: ${{ (github.event.pull_request.author_association == 'MEMBER' ||
+      github.event.pull_request.author_association == 'COLLABORATOR' ||
+      github.event.pull_request.author_association == 'OWNER') ||
+      (github.event_name == 'pull_request_target' &&
+      github.event.action == 'labeled' &&
+      github.event.pull_request.head.repo.fork == true &&
+      contains(github.event.label.name, 'request-cf-deploy')) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          # ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          # fetch-depth: 0
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # PNPM Store cache setup
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # Run a build step here if your project requires
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build site
+        run: pnpm -F www build
+
+      - name: Deploy to Cloudflare Pages
+        id: cloudflare-pages-deploy
+        uses: AdrianGonz97/cf-pages-action@fix/gh-deployment
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: cf-monorepo-test-site
+          directory: ./.svelte-kit/cloudflare
+          # Optional: Enable this if you want to have GitHub Deployments triggered
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: Change the working directory
+          workingDirectory: sites/www
+          # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
+          wranglerVersion: "3"
+
+      - name: Create PR comment
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            ### ⚡ Successfully Cloudflare Pages deployed!
+            | Name | Link |
+            | :--- | :--- |
+            | Latest commit | ${{ github.event.pull_request.head.sha || github.sha }} |
+            | Latest deploy log | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
+            | Preview URL | ${{ steps.cloudflare-pages-deploy.outputs.url }} |
+            | Environment | ${{ steps.cloudflare-pages-deploy.outputs.environment }} |
+
+  cleanup:
+    name: Remove label
+    if: always()
+    needs: [publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove label
+        if: ${{ github.event_name == 'pull_request_target' && contains(github.event.label.name, 'request-cf-deploy') }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.removeLabel({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: ['request-cf-deploy']
+            })

@@ -1,0 +1,37 @@
+name: Mock deployment
+
+on:
+  pull_request:
+    types:
+      - opened
+      - labeled
+      - synchronize
+
+permissions:
+  deployments: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  mock-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: start deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          env: integration
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          debug: true
+
+      - name: start deployment
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          debug: true
