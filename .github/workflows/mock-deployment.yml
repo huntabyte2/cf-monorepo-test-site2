@@ -21,6 +21,7 @@ jobs:
                   ref: ${{ github.head_ref }}
                   env: Preview
                   override: false
+                  debug: true
 
             - name: Update Deployment Status
               uses: bobheadxi/deployments@v1
@@ -33,3 +34,4 @@ jobs:
                   status: ${{ job.status }}
                   deployment_id: ${{ steps.deployment.outputs.deployment_id }}
                   env_url: "https://google.com"
+                  debug: true
