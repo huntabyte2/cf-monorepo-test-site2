@@ -52,7 +52,7 @@ jobs:
                   projectName: cf-monorepo-test-site2
                   directory: ./.svelte-kit/cloudflare
                   # Optional: Enable this if you want to have GitHub Deployments triggered
-                  gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+                  gitHubToken: ${{ secrets.SOME_TOKEN }}
                   # Optional: Change the working directory
                   workingDirectory: sites/www
                   # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
