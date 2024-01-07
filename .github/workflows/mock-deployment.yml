@@ -1,7 +1,11 @@
 name: Mock deployment
 
 on:
-    workflow_dispatch:
+    pull_request:
+        types:
+            - opened
+            - labeled
+            - synchronize
 
 permissions:
     deployments: write
