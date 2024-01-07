@@ -49,7 +49,7 @@ jobs:
               with:
                   apiToken: ${{ secrets.CF_API_TOKEN }}
                   accountId: ${{ secrets.CF_ACCOUNT_ID }}
-                  projectName: cf-monorepo-test-site
+                  projectName: cf-monorepo-test-site2
                   directory: ./.svelte-kit/cloudflare
                   # Optional: Enable this if you want to have GitHub Deployments triggered
                   gitHubToken: ${{ secrets.GITHUB_TOKEN }}
