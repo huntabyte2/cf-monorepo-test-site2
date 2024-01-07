@@ -2,10 +2,6 @@ name: Test PR Target
 
 on:
     pull_request_target:
-        types:
-            - opened
-            - labeled
-            - synchronize
 
 permissions:
     deployments: write

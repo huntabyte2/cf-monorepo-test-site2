@@ -1,11 +1,7 @@
 name: Test PR
 
 on:
-    pull_request_target:
-        types:
-            - opened
-            - labeled
-            - synchronize
+    pull_request:
 
 permissions:
     deployments: write
