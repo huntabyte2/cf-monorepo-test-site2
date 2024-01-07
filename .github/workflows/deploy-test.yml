@@ -22,7 +22,7 @@ jobs:
               with:
                   step: start
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  ref: ${{ github.head_ref }}
+                  ref: ${{ github.ref }}
                   env: Preview
                   override: false
 
