@@ -14,31 +14,21 @@ concurrency:
     cancel-in-progress: true
 
 permissions:
-    # default contents: read & write (in forked repos, only read)
     contents: write
-    # default deployments: read & write (in forked repos, only read)
     deployments: write
-    # default pull-requests: read & write (in forked repos, only read)
     pull-requests: write
 
 jobs:
     publish:
         runs-on: ubuntu-latest
+        environment: Preview
         name: Publish Preview to Cloudflare Pages
-        if: ${{ (github.event.pull_request.author_association == 'MEMBER' ||
-            github.event.pull_request.author_association == 'COLLABORATOR' ||
-            github.event.pull_request.author_association == 'OWNER') ||
-            (github.event_name == 'pull_request_target' &&
-            github.event.action == 'labeled' &&
-            github.event.pull_request.head.repo.fork == true &&
-            contains(github.event.label.name, 'request-cf-deploy')) }}
         steps:
             - uses: actions/checkout@v3
               with:
                   ref: ${{ github.event.pull_request.head.ref }}
                   repository: ${{ github.event.pull_request.head.repo.full_name }}
-                  # ref: ${{ github.event.pull_request.head.sha || github.ref }}
-                  # fetch-depth: 0
+
             - uses: pnpm/action-setup@v2
               with:
                   version: 8
@@ -82,7 +72,6 @@ jobs:
                   wranglerVersion: "3"
 
             - name: Create PR comment
-              if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
               uses: mshick/add-pr-comment@v2
               with:
                   message: |
@@ -93,22 +82,3 @@ jobs:
                       | Latest deploy log | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
                       | Preview URL | ${{ steps.cloudflare-pages-deploy.outputs.url }} |
                       | Environment | ${{ steps.cloudflare-pages-deploy.outputs.environment }} |
-
-    cleanup:
-        name: Remove label
-        if: always()
-        needs: [publish]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Remove label
-              if: ${{ github.event_name == 'pull_request_target' && contains(github.event.label.name, 'request-cf-deploy') }}
-              uses: actions/github-script@v6
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  script: |
-                      github.rest.issues.removeLabel({
-                        issue_number: context.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        name: ['request-cf-deploy']
-                      })
