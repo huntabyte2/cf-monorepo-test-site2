@@ -1,59 +1,59 @@
 name: Deploy Production Site
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - "sites/www/**"
+    push:
+        branches:
+            - main
+        paths:
+            - "sites/www/**"
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
-    name: Publish to Cloudflare Pages
-    steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            deployments: write
+        name: Publish to Cloudflare Pages
+        steps:
+            - uses: actions/checkout@v3
+            - uses: pnpm/action-setup@v2
+              with:
+                  version: 8
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
 
-      # PNPM Store cache setup
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        run: |
-          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            # PNPM Store cache setup
+            - name: Get pnpm store directory
+              id: pnpm-cache
+              run: |
+                  echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+            - name: Setup pnpm cache
+              uses: actions/cache@v3
+              with:
+                  path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
 
-      # Run a build step here if your project requires
-      - name: Install dependencies
-        run: pnpm install
+            # Run a build step here if your project requires
+            - name: Install dependencies
+              run: pnpm install
 
-      - name: Build site
-        run: pnpm -F www build
+            - name: Build site
+              run: pnpm -F www build
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: cf-monorepo-test-site
-          directory: ./.svelte-kit/cloudflare
-          # Optional: Enable this if you want to have GitHub Deployments triggered
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: Change the working directory
-          workingDirectory: sites/www
-          # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
-          wranglerVersion: "3"
+            - name: Deploy to Cloudflare Pages
+              uses: cloudflare/pages-action@v1
+              with:
+                  apiToken: ${{ secrets.CF_API_TOKEN }}
+                  accountId: ${{ secrets.CF_ACCOUNT_ID }}
+                  projectName: cf-monorepo-test-site
+                  directory: ./.svelte-kit/cloudflare
+                  # Optional: Enable this if you want to have GitHub Deployments triggered
+                  gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+                  # Optional: Change the working directory
+                  workingDirectory: sites/www
+                  # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
+                  wranglerVersion: "3"
