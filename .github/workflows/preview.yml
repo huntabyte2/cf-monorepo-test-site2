@@ -75,7 +75,7 @@ jobs:
                   projectName: cf-monorepo-test-site2
                   directory: ./.svelte-kit/cloudflare
                   # Optional: Enable this if you want to have GitHub Deployments triggered
-                  gitHubToken: ${{ secrets.GH_TOKEN }}
+                  gitHubToken: ${{ secrets.GITHUB_TOKEN }}
                   # Optional: Change the working directory
                   workingDirectory: sites/www
                   # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
@@ -104,7 +104,7 @@ jobs:
               if: ${{ github.event_name == 'pull_request_target' && contains(github.event.label.name, 'request-cf-deploy') }}
               uses: actions/github-script@v6
               with:
-                  github-token: ${{ secrets.GH_TOKEN }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
                   script: |
                       github.rest.issues.removeLabel({
                         issue_number: context.issue.number,
