@@ -68,7 +68,7 @@ jobs:
 
             - name: Deploy to Cloudflare Pages
               id: cloudflare-pages-deploy
-              uses: AdrianGonz97/cf-pages-action@fix/gh-deployment
+              uses: AdrianGonz97/cf-pages-action@hb
               with:
                   apiToken: ${{ secrets.CF_API_TOKEN }}
                   accountId: ${{ secrets.CF_ACCOUNT_ID }}
