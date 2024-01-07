@@ -21,7 +21,7 @@ jobs:
               id: deployment
               with:
                   step: start
-                  token: ${{ secrets.GITHUB_TOKEN }}
+                  token: ${{ secrets.SOME_TOKEN }}
                   ref: ${{ github.ref }}
                   env: Preview
                   override: false
@@ -31,7 +31,7 @@ jobs:
               if: always()
               with:
                   step: finish
-                  token: ${{ secrets.GITHUB_TOKEN }}
+                  token: ${{ secrets.SOME_TOKEN }}
                   env: ${{ steps.deployment.outputs.env }}
                   override: false
                   status: ${{ job.status }}
